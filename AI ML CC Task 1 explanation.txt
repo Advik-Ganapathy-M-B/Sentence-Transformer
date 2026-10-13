@@ -1,0 +1,88 @@
+AI ML CC Task 1
+Advik Ganapathy M B
+2026A7PS0354
+
+Explanation to code:
+
+Line 1: Importing numpy (needed for cosine similarity function)
+
+Line 2: Importing SentenceTransformer to embed the text chunks using a pretrained model as told in task details
+
+Line 4: Variable to store file to be read
+
+Line 5: Opening and reading the file, storing its contents in variable content 
+
+
+Line 9-15: Initializing variables that i'll need for chunking
+
+Line 16-20: For loop iterates through every character of content, current is being used to store each current sentence, when punctuation is reached current variable having current sentence is appended to list of sentences called sentences and current is reset to empty string so that next sentence can be stored. 
+
+Line 21-26: This for loop iterates through each sentence in the list of sentences we obtain in the previous step. Here I find the number of words in each sentence, add it to find total current chunk length and add the sentence to the chunk. 
+For documents with 1000s of words I thought each chunk having around 50 words would answer the query with enough context given. So totalchlen>=40 block will execute when the chunk length is over 40, this can be any number depending on length of last sentence but for a usual sentence it will end between 45-55 approximately. 
+This prevents any answer from being cutoff mid sentence while also having an answer of appropriate length. Then the chunk is appended to the list of chunks
+
+Line 27-28: Initially I was getting incomplete answers because half the answer would be in one chunk and one of the important lines of the answer would be in the next chunk so to prevent this, these lines create an overlap of 1 sentence.
+In the if block of line 25, chunk=sentence stores the last sentence of the previous chunk so that it can be the first line of the next chunk so that if this line is important for the context of the next few sentences it will be there (also totalchlen is set to that sentence's length to maintain chunk word length).
+
+Line 29-30: This is to save the last chunk of the document, in the ending the last chunk might be <40 words and wont be saved during the looping process so this makes sure that the last chunk is not lost by directly appending it to chunks even though it's not over 40 words
+
+Line 33: all-MiniLM-L6-v2 is a pretrained model for embedding chunks 
+
+Line 34-35: Encoding the chunks using .encode() function of Sentence Transformers then taking chunkno variable to store total number of embedded chunks
+Embedding is converting the chunk text into a vector which is called embedding
+
+Line 37-38: Taking user input for the query
+
+Line 39: Making dictionary called pairs to store each chunk with its similarity score
+
+Line 40: using norm function from linalg which is a part of NumPy library to get modulus/magnitude of the query embedding (vector) 
+
+Line 41-44: Iterating through all the embedded chunks and finding their similarity score using our own cosine similarity function.
+Similarity score= dot product(vector of query and vector of the chunk in this iteration) divided by (magnitude of query vector*magnitude of chunk's vector)
+basically using the formula cos theta = a vector dot b vector /(magnitude of a * magnitude of b) as the two embeddings with a smaller difference in angle (so more cosine similarity so more semantic similarity) are embeddings that are closer in meaning 
+Storing each chunk as a key with value being their similarity score to the query, in the dictionary pairs
+
+Line 46-47: Two lists to store topsearches and topscores 
+
+Line 48-50: Making list of scores and then chunks from the values and keys respectively in the dictionary pairs
+Also storing number of total chunks in upper for later
+
+Line 51: 
+I have set the threshold at 0.471 after testing 25-30 queries.
+The original document I tested on was the Wikipedia page about World War 2 so some of the queries and some of the scores I will mention here which made me pick 0.471:
+
+"What event started world war 2" --> 0.62 to 0.58 scored answers were all relevant, then some lesser relevant ones and from 0.53 and below I didn't find them relevant
+
+"What was the biggest battle of the war" --> most relevant answer I felt was at 0.472 (which was the 3rd result)
+
+"How was Germany partitioned" --> 0.472 again was the best answer, answers above this (0.5+) turned out to be less relevant than this 
+
+Then I tried some questions which were completely irrelevant to see what scores they would reach up to, some of them are:
+
+"Who won the 2022 world cup final?"--> 0.336 highest
+"How did the war affect Lebron's Legacy?" --> 0.369
+"When will GTA 6 be released?" ---> 0.194
+"When did India get independence?" --->0.36
+
+So the threshold had to be above 0.37~0.40
+But also the relevant answers were usually above 0.50 and sometimes around 0.47
+So I chose 0.471 as:
+If the question is irrelevant, the threshold will prevent it from being shown
+If the question is relevant, it will pick the best answers 
+In some cases this will not work as the threshold wont be perfect but I would rather have the program give a close to relevant answer to a query it doesnt have the exact answer to rather than having a higher threshold and preventing a relevant answer from being given even when it has the right answer
+
+And for the times the answer was easily available, many chunks(10+ chunks as sentence overlap caused many chunks to get high similarity score) were above threshold so I set it to max of top 5 searches as answer to the query
+
+Line 52-60: For loop to iterate through the scorelist and get the maximum and pop/remove that entry so that in the next iteration the 2nd highest can be chosen and so on
+min(5,upper) incase there is less than 5 chunks then because of this the program wont give an error
+
+Appending topsearches and topscores to the lists based on threshold
+Line 61-66: To deal with cases where are no relevant answers above the threshold it wiil print the message if there are no members in topscores list
+If there is an answer above threshold it will be printed using a loop, min(5,len(topscores)) restricts the total search results displayed to 5 if >= 5 are above threshold. Using min, incase there are for example 4 topscores index wont be out of range.
+
+End of Program
+Thank You.
+
+
+
+
